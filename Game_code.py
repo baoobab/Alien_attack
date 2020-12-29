@@ -3,10 +3,16 @@ import sys
 
 import pygame
 
-size = width, height = 500, 600
+size = width, height = 550, 650
 screen = pygame.display.set_mode(size)
 pygame.display.set_caption('Alien Attack')
+pygame.mouse.set_visible(False)
 clock = pygame.time.Clock()
+
+x = 225
+y = 550
+ship_height = 90
+ship_width = 80
 
 
 def load_image(name, colorkey=None):
@@ -27,14 +33,20 @@ def load_image(name, colorkey=None):
 
 
 background = load_image("bg.jpg")
+ship = load_image("spaceship.png")
+
 running = True
 while running:
     screen.blit(background, (0, 0))
+    screen.blit(ship, (x, y))
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-    clock.tick(30)
 
+    x = pygame.mouse.get_pos()[0]
+    y = pygame.mouse.get_pos()[1]
+
+    clock.tick(30)
     pygame.display.flip()
 
 pygame.quit()
