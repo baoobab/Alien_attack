@@ -2,6 +2,7 @@ import os
 import sys
 import random
 import pygame
+import datetime
 
 pygame.font.init()
 size = width, height = 550, 650
@@ -15,9 +16,8 @@ y = 550
 
 ship_height = 90
 ship_width = 80
-
+boss_lvl = 10
 bullets = []
-
 aliens = []
 x_alien = 30
 y_alien = 30
@@ -50,6 +50,17 @@ def draw_txt(screen):
     screen.blit(text, (500, 15))
     screen.blit(text2, (470, 5))
     screen.blit(text3, (420, 610))
+
+
+def draw_boss(screen, flag):
+    if flag == 111:
+        font = pygame.font.Font(None, 120)
+        text = font.render("BOSS", True, (255, 0, 0))
+        screen.blit(text, (170, 300))
+    else:
+        screen.blit(boss_hp_bg, (140, 10))
+        for i in range(flag):
+            screen.blit(boss_hp, (145 + 20 * i, 15))
 
 
 def draw_score(screen, flag):
@@ -113,7 +124,7 @@ def terminate():
 
 
 def lvl_generate():
-    global alien_speed, x_alien, y_alien, lvl
+    global alien_speed, x_alien, y_alien, lvl, boss_lvl
     x_alien = 30
     y_alien = 30
     aliens.clear()
@@ -144,11 +155,12 @@ def lvl_generate():
         for i in range(6):
             _ = []
             for j in range(3):
-                if i == 3 and j == 2:
+                if i == 2 and j == 2:
                     _.append(10)
                 else:
                     _.append(0)
             aliens.append(_)
+        boss_lvl += 10
         alien_speed = alien_speed // 2
 
     alien_speed += 0.05
@@ -192,7 +204,10 @@ def start_menu():
 background = load_image("bg.jpg")
 ship = load_image("spaceship.png")
 game_over = load_image("gameover.png", -1)
-name = load_image("name.png", -1)
+boss_hp_bg = load_image("boss_hp_bg.png")
+boss_hp = load_image("boss_hp.png")
+boss_hp_bg = pygame.transform.scale(boss_hp_bg, (210, 40))
+boss_hp = pygame.transform.scale(boss_hp, (10, 30))
 
 menu_bg = load_image("menu_bg3.png")
 menu_bg = pygame.transform.scale(menu_bg, (550, 650))
@@ -220,7 +235,6 @@ count_score(1)
 running = True
 while running:
     screen.blit(background, (0, 0))
-    screen.blit(name, (125, 0))
     screen.blit(ship, (x, y))
 
     if score > best_score:
@@ -237,20 +251,27 @@ while running:
                             if aliens[i][j] == 3:
                                 score += 1
                                 aliens[i][j] = 0
-                            if 3 > aliens[i][j] > 0:
-                                    aliens[i][j] -= 1
-                            else:
-                                score += 1
+                            elif aliens[i][j] == 2:
+                                aliens[i][j] = 1
+                            elif aliens[i][j] == 1:
+                                aliens[i][j] = 0
+                                score += 2
                             bullets.remove(bullet)
                 else:
                     screen.blit(aliens_img[10], (x_alien * 3 * i + 25, y_alien + j * 50))
+                    if aliens[i][j] == 10:
+                        draw_boss(screen, 111)
+                        draw_boss(screen, 10)
+                    else:
+                        draw_boss(screen, aliens[i][j])
                     for bullet in bullets:
                         if (x_alien * 3 * i + 25 + 150 > bullet.x > x_alien * 3 * i + 25) \
                                 and y_alien + j * 50 + 100 > bullet.y > y_alien + j * 50:
-                            if aliens[i][j] > 0:
+                            if aliens[i][j] > 1:
                                 aliens[i][j] -= 1
                             else:
                                 aliens[i][j] = 0
+                                score += 10
                             bullets.remove(bullet)
 
                 if is_cross([x, y, x + ship_width, y + ship_height],
