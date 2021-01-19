@@ -15,6 +15,8 @@ y = 550
 ship_height = 90
 ship_width = 80
 bullets = []
+x_alien = 30
+y_alien = 30
 
 
 class bulleti():
@@ -47,6 +49,7 @@ def load_image(name, colorkey=None):
         print(f"Файл с изображением '{fullname}' не найден")
         sys.exit()
     image = pygame.image.load(fullname)
+
     if colorkey is not None:
         image = image.convert()
         if colorkey == -1:
@@ -59,11 +62,23 @@ def load_image(name, colorkey=None):
 
 background = load_image("bg.jpg")
 ship = load_image("spaceship.png")
+alien = load_image("alien.png", -1)
+alien = pygame.transform.scale(alien, (50, 50))
 
 running = True
 while running:
     screen.blit(background, (0, 0))
     screen.blit(ship, (x, y))
+    for i in range(6):
+        for j in range(3):
+            screen.blit(alien, (x_alien * 3 * i + 25, y_alien + j * 50))
+            # проверка на совпадение координат пришельца и пули, удаление пули, нужно дописать, чтобы пропадал пришелец
+            for bullet in bullets:
+                if (
+                        bullet.x < x_alien * 3 * i + 25 + 50 and bullet.x > x_alien * 3 * i + 25) \
+                        and bullet.y < y_alien + j * 50 + 50 and bullet.y > y_alien + j * 50:
+                    bullets.remove(bullet)
+    y_alien += 0.3
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
@@ -71,19 +86,21 @@ while running:
             if len(bullets) < 5:
                 bullets.append(bulleti(round(x + 80 // 2), round(y + 90 // 2),
                                        5, (255, 0, 0), 1))
-
     for bullet in bullets:
         if 550 > bullet.y > 0:
             bullet.y -= bullet.vel
         else:
             bullets.pop(bullets.index(bullet))
+        print(bullet.y, bullet.x)
+
     for bullet in bullets:
         bullet.draw(screen)
+
     draw_ammo(screen)
     x = pygame.mouse.get_pos()[0]
     y = pygame.mouse.get_pos()[1]
 
-    clock.tick(30)
+    clock.tick(40)
     pygame.display.flip()
 
 pygame.quit()
