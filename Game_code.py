@@ -16,15 +16,22 @@ y = 550
 
 ship_height = 90
 ship_width = 80
-boss_lvl = 10
+
 bullets = []
+boss_bullets = []
 aliens = []
+
 x_alien = 30
 y_alien = 30
 alien_speed = 0
+
 lvl = 0
+boss_lvl = 10
+
 score = 0
 best_score = 0
+stop_game = False
+pause_timer = True
 
 
 class bulleti():
@@ -53,14 +60,15 @@ def draw_txt(screen):
 
 
 def draw_boss(screen, flag):
+    global boss_hp
     if flag == 111:
         font = pygame.font.Font(None, 120)
         text = font.render("BOSS", True, (255, 0, 0))
-        screen.blit(text, (170, 300))
+        screen.blit(text, (150, 300))
     else:
         screen.blit(boss_hp_bg, (140, 10))
-        for i in range(flag):
-            screen.blit(boss_hp, (145 + 20 * i, 15))
+        boss_hp = pygame.transform.scale(boss_hp, ((200 // boss_lvl) * flag, 30))
+        screen.blit(boss_hp, (145, 15))
 
 
 def draw_score(screen, flag):
@@ -130,7 +138,7 @@ def lvl_generate():
     aliens.clear()
     lvl += 1
 
-    if lvl % 5 != 0:
+    if lvl % 5 != 0 and lvl != 0:
         if random.randrange(0, 2) == 1:
             for i in range(6):
                 _ = []
@@ -156,11 +164,10 @@ def lvl_generate():
             _ = []
             for j in range(3):
                 if i == 2 and j == 2:
-                    _.append(10)
+                    _.append(boss_lvl)
                 else:
                     _.append(0)
             aliens.append(_)
-        boss_lvl += 10
         alien_speed = alien_speed // 2
 
     alien_speed += 0.05
@@ -194,20 +201,28 @@ def start_menu():
                 pygame.mouse.set_visible(False)
                 return  # начинаем игру
 
-            elif event.type == pygame.KEYDOWN:
-                pygame.mouse.set_visible(False)
-                return  # начинаем игру
-
         pygame.display.flip()
+
+
+def pause_menu():
+    global stop_game, pause_timer
+    screen.blit(pause, (130, 250))
+    stop_game = True
+    pause_timer = False
+    pygame.mouse.set_visible(True)
 
 
 background = load_image("bg.jpg")
 ship = load_image("spaceship.png")
 game_over = load_image("gameover.png", -1)
+
+pause = load_image("pause.png")
+pause = pygame.transform.scale(pause, (300, 160))
+
 boss_hp_bg = load_image("boss_hp_bg.png")
 boss_hp = load_image("boss_hp.png")
 boss_hp_bg = pygame.transform.scale(boss_hp_bg, (210, 40))
-boss_hp = pygame.transform.scale(boss_hp, (10, 30))
+boss_hp = pygame.transform.scale(boss_hp, (200, 30))
 
 menu_bg = load_image("menu_bg3.png")
 menu_bg = pygame.transform.scale(menu_bg, (550, 650))
@@ -222,11 +237,13 @@ alien4 = load_image("boss.png", -1)
 alien1 = load_image("alien2.png", -1)
 alien2 = load_image("alien.png", -1)
 alien3 = load_image("alien3.png", -1)
+alien5 = load_image("boss_kill.png")
 alien1 = pygame.transform.scale(alien1, (50, 50))
 alien2 = pygame.transform.scale(alien2, (50, 50))
 alien3 = pygame.transform.scale(alien3, (50, 50))
 alien4 = pygame.transform.scale(alien4, (150, 100))
-aliens_img = {1: alien1, 2: alien2, 3: alien3, 10: alien4}
+alien5 = pygame.transform.scale(alien5, (150, 100))
+aliens_img = {1: alien1, 2: alien2, 3: alien3, 10: alien4, 11: alien5}
 
 lvl_generate()
 start_menu()
@@ -234,8 +251,9 @@ count_score(1)
 
 running = True
 while running:
-    screen.blit(background, (0, 0))
-    screen.blit(ship, (x, y))
+    if not stop_game:
+        screen.blit(background, (0, 0))
+        screen.blit(ship, (x, y))
 
     if score > best_score:
         best_score = score
@@ -258,12 +276,20 @@ while running:
                                 score += 2
                             bullets.remove(bullet)
                 else:
-                    screen.blit(aliens_img[10], (x_alien * 3 * i + 25, y_alien + j * 50))
-                    if aliens[i][j] == 10:
+                    if aliens[i][j] != 1:
+                        screen.blit(aliens_img[10], (x_alien * 3 * i + 25, y_alien + j * 50))
+                    else:
+                        screen.blit(aliens_img[11], (x_alien * 3 * i + 25, y_alien + j * 50))
+                    if random.randrange(0, 30) == 3 and not stop_game:
+                        boss_bullets.append(
+                            bulleti(round(x_alien * 3 * i + 60 + 80 // 2), round(y_alien + j * 50 + 100 // 2),
+                                    10, (255, 0, 0), -1))
+                    if aliens[i][j] > boss_lvl - 2:
                         draw_boss(screen, 111)
-                        draw_boss(screen, 10)
+                        draw_boss(screen, boss_lvl)
                     else:
                         draw_boss(screen, aliens[i][j])
+
                     for bullet in bullets:
                         if (x_alien * 3 * i + 25 + 150 > bullet.x > x_alien * 3 * i + 25) \
                                 and y_alien + j * 50 + 100 > bullet.y > y_alien + j * 50:
@@ -272,7 +298,14 @@ while running:
                             else:
                                 aliens[i][j] = 0
                                 score += 10
+                                boss_lvl += 10
                             bullets.remove(bullet)
+
+                    for bullet in boss_bullets:
+                        if (x + ship_width > bullet.x > x) and y + ship_height > bullet.y > y:
+                            screen.blit(game_over, (130, 250))
+                            count_score(0)
+                            boss_bullets.remove(bullet)
 
                 if is_cross([x, y, x + ship_width, y + ship_height],
                             [x_alien * 3 * i + 25 + 50, y_alien + j * 50 + 50, x_alien * 3 * i + 25,
@@ -281,37 +314,60 @@ while running:
                     screen.blit(game_over, (130, 250))
                     count_score(0)
 
-        y_alien += alien_speed
+        if not stop_game:
+            y_alien += alien_speed
 
-        if aliens == [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]]:
-            lvl_generate()
+            if aliens == [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]]:
+                lvl_generate()
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-        if event.type == pygame.MOUSEBUTTONDOWN:
+        if event.type == pygame.MOUSEBUTTONDOWN and not stop_game:
             if len(bullets) < 5:
                 bullets.append(bulleti(round(x + 80 // 2), round(y + 50 // 2),
                                        5, (255, 0, 0), 1))
+    if not pygame.display.get_active():
+        pause_menu()
+    else:
+        pause_timer = True
     keys = pygame.key.get_pressed()
 
     if keys[pygame.K_ESCAPE]:
-        running = False
+        pause_menu()
 
-    for bullet in bullets:
-        if 550 > bullet.y > 0:
-            bullet.y -= bullet.vel
-        else:
-            bullets.pop(bullets.index(bullet))
+    if keys[pygame.K_SPACE] and stop_game:
+        stop_game = False
+        pygame.mouse.set_visible(False)
 
-    for bullet in bullets:
-        bullet.draw(screen)
+    if keys[pygame.K_r] and stop_game:
+        boss_lvl = 10
+        lvl = 0
+        alien_speed = 0
+        lvl_generate()
+        stop_game = False
+        pygame.mouse.set_visible(False)
 
-    draw_score(screen, 1)
-    draw_txt(screen)
+    if not stop_game:
+        for bullet in bullets:
+            bullet.draw(screen)
+            if 550 > bullet.y > 0:
+                bullet.y -= bullet.vel
+            else:
+                bullets.pop(bullets.index(bullet))
 
-    x = pygame.mouse.get_pos()[0]
-    y = pygame.mouse.get_pos()[1]
+        for bullet in boss_bullets:
+            bullet.draw(screen)
+            if 550 > bullet.y > 0:
+                bullet.y -= bullet.vel
+            else:
+                boss_bullets.pop(boss_bullets.index(bullet))
+
+        x = pygame.mouse.get_pos()[0]
+        y = pygame.mouse.get_pos()[1]
+
+        draw_score(screen, 1)
+        draw_txt(screen)
 
     clock.tick(40)
     pygame.display.flip()
