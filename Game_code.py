@@ -487,6 +487,7 @@ while running:
             if len(bullets) < 5:
                 bullets.append(bulleti(round(x + 80 // 2), round(y + 50 // 2),
                                        5, (255, 0, 0), 1))
+
     if not pygame.display.get_active():
         pause_menu()
     else:
