@@ -78,20 +78,65 @@ def is_cross(a, b):
         return False
 
 
+def terminate():
+    pygame.quit()
+    sys.exit()
+
+
+def start_menu():
+    pygame.mouse.set_visible(True)
+    screen.blit(menu_bg, (0, 0))
+    screen.blit(menu_btn1, (120, 270))
+    screen.blit(menu_btn2, (120, 390))
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            elif event.type == pygame.MOUSEMOTION:
+                if 420 > pygame.mouse.get_pos()[0] > 120 and 370 > \
+                        pygame.mouse.get_pos()[1] > 270:
+                    screen.blit(menu_btn1a, (120, 270))
+                else:
+                    screen.blit(menu_btn1, (120, 270))
+                if 420 > pygame.mouse.get_pos()[0] > 120 and 490 > \
+                        pygame.mouse.get_pos()[1] > 390:
+                    screen.blit(menu_btn2a, (120, 390))
+                else:
+                    screen.blit(menu_btn2, (120, 390))
+
+            elif event.type == pygame.MOUSEBUTTONDOWN and (
+                    420 > pygame.mouse.get_pos()[0] > 120 and 370 >
+                    pygame.mouse.get_pos()[1] > 270):
+                pygame.mouse.set_visible(False)
+                return  # начинаем игру
+
+            elif event.type == pygame.KEYDOWN:
+                pygame.mouse.set_visible(False)
+                return  # начинаем игру
+
+        pygame.display.flip()
+
+
 background = load_image("bg.jpg")
 ship = load_image("spaceship.png")
 alien = load_image("alien.png", -1)
 game_over = load_image("gameover.png", -1)
-
+menu_bg = load_image("menu_bg3.png")
 alien = pygame.transform.scale(alien, (50, 50))
+menu_bg = pygame.transform.scale(menu_bg, (550, 650))
+menu_btn1 = load_image("btn_1t.png")  # "t" означает что это тестовая кнопка
+menu_btn1a = load_image(
+    "btn_1ta.png")  # "a" означает что это активная кнопка (меняется на неё при наведении)
+menu_btn2 = load_image("btn_2t.png")
+menu_btn2a = load_image("btn_2ta.png")
 
 for i in range(6):
     _ = []
     for j in range(3):
         _.append(1)
     aliens.append(_)
-# print(aliens)
 
+start_menu()
 running = True
 while running:
     screen.blit(background, (0, 0))
@@ -102,14 +147,16 @@ while running:
             if aliens[i][j] == 1:
                 screen.blit(alien, (x_alien * 3 * i + 25, y_alien + j * 50))
                 for bullet in bullets:
-                    if (x_alien * 3 * i + 25 + 50 > bullet.x > x_alien * 3 * i + 25) \
+                    if (
+                            x_alien * 3 * i + 25 + 50 > bullet.x > x_alien * 3 * i + 25) \
                             and y_alien + j * 50 + 50 > bullet.y > y_alien + j * 50:
                         aliens[i][j] = 0
                         bullets.remove(bullet)
 
                 # ф-я для отслеживания столкновений
                 if is_cross([x, y, x + ship_width, y + ship_height],
-                            [x_alien * 3 * i + 25 + 50, y_alien + j * 50 + 50, x_alien * 3 * i + 25, y_alien + j * 50]):
+                            [x_alien * 3 * i + 25 + 50, y_alien + j * 50 + 50,
+                             x_alien * 3 * i + 25, y_alien + j * 50]):
                     # если врезались во врага, то игра окончена
                     screen.blit(game_over, (130, 250))
                     # running = False
@@ -117,7 +164,7 @@ while running:
     y_alien += alien_speed
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            running = False
+            terminate()
         if event.type == pygame.MOUSEBUTTONDOWN:
             if len(bullets) < 5:
                 bullets.append(bulleti(round(x + 80 // 2), round(y + 50 // 2),
@@ -125,7 +172,7 @@ while running:
     keys = pygame.key.get_pressed()
 
     if keys[pygame.K_ESCAPE]:
-        running = False
+        terminate()
 
     for bullet in bullets:
         if 550 > bullet.y > 0:
