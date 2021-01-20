@@ -29,25 +29,26 @@ y = 550
 ship_height = 90
 ship_width = 80
 
-bullets = []
-boss_bullets = []
-aliens = []
+bullets = []  # патроны
+boss_bullets = []  # патроны босса
+aliens = []  # пришельцы (набор цифр)
 
-x_alien = 30
+x_alien = 30  # коорды пришельцев
 y_alien = 30
-alien_speed = 0
+alien_speed = 0  # скорость пришельцев
 
-boss_lvl = 10
-lvl = 0
-score = 0
-best_score = 0
+boss_lvl = 10  # хп босса
+lvl = 0  # текущий уровень
+score = 0  # счет
+best_score = 0  # лучший счёт
 
-can_draw = True
-boss = False
-stop_game = False
-pause_timer = True
+can_draw = True  # для правильной отрисовки кнопок в меню
+boss = False  # проверка на босса
+stop_game = False  # проверка на паузу
+pause_timer = True  # пауза при сворачивании
 
 
+# класс патронов
 class bulleti():
     def __init__(self, x, y, r, color, stor):
         self.x = x
@@ -62,6 +63,7 @@ class bulleti():
         pygame.draw.circle(self.win, self.color, (self.x, self.y), self.r)
 
 
+# отрисовка предисловия
 def draw_rules(screen):
     global can_draw
     can_draw = False
@@ -112,6 +114,7 @@ def draw_rules(screen):
         pygame.display.flip()
 
 
+# отрисовка патрон и уровня
 def draw_txt(screen):
     font = pygame.font.Font(None, 100)
     font2 = pygame.font.Font(None, 25)
@@ -123,6 +126,7 @@ def draw_txt(screen):
     screen.blit(text3, (420, 610))
 
 
+# отрисовка ХП и названия босса
 def draw_boss(screen, flag):
     global boss_hp
     if flag == 111:
@@ -136,6 +140,7 @@ def draw_boss(screen, flag):
         screen.blit(boss_hp, (145, 15))
 
 
+# отрисовка счета
 def draw_score(screen, flag):
     if flag == 1:
         font = pygame.font.Font(None, 25)
@@ -166,6 +171,7 @@ def load_image(name, colorkey=None):
     return image
 
 
+# считываем или записываем счёт в файл для сохранения
 def count_score(flag):
     global best_score
     if flag == 1:
@@ -179,25 +185,27 @@ def count_score(flag):
                 f.write(str(best_score))
 
 
+# проверка на пересечение корабля и пришельцев
 def is_cross(a, b):
     ax1, ay1, ax2, ay2 = a[0], a[1], a[2], a[3]  # прямоугольник А
     bx1, by1, bx2, by2 = b[0], b[1], b[2], b[3]  # прямоугольник B
 
-    s1 = (ax1 >= bx1 and ax1 <= bx2) or (ax2 >= bx1 and ax2 <= bx2)
-    s2 = (ay1 >= by1 and ay1 <= by2) or (ay2 >= by1 and ay2 <= by2)
-    s3 = (bx1 >= ax1 and bx1 <= ax2) or (bx2 >= ax1 and bx2 <= ax2)
-    s4 = (by1 >= ay1 and by1 <= ay2) or (by2 >= ay1 and by2 <= ay2)
+    s1 = (bx1 <= ax1 <= bx2) or (ax2 >= bx1 and ax2 <= bx2)
+    s2 = (by1 <= ay1 <= by2) or (ay2 >= by1 and ay2 <= by2)
+    s3 = (ax1 <= bx1 <= ax2) or (bx2 >= ax1 and bx2 <= ax2)
+    s4 = (ay1 <= by1 <= ay2) or (by2 >= ay1 and by2 <= ay2)
     if ((s1 and s2) or (s3 and s4)) or ((s1 and s4) or (s3 and s2)):
         return True
     else:
         return False
 
 
-def terminate():
+def terminate():  # выход
     pygame.quit()
     sys.exit()
 
 
+# генерация уровня или босса
 def lvl_generate():
     global alien_speed, x_alien, y_alien, lvl, boss_lvl
     x_alien = 30
@@ -240,6 +248,7 @@ def lvl_generate():
     alien_speed += 0.05
 
 
+# стартовое меню
 def start_menu():
     global running, GAME_OVER, stop_game
     clear_game()
@@ -288,6 +297,7 @@ def start_menu():
         pygame.display.flip()
 
 
+# меню паузы
 def pause_menu():
     global stop_game, pause_timer
     screen.blit(pause, (120, 210))
@@ -297,6 +307,7 @@ def pause_menu():
     pygame.mouse.set_visible(True)
 
 
+# игра окончена, выход и очистка
 def gameover():
     global GAME_OVER, running
     pygame.mixer.pause()
@@ -311,6 +322,7 @@ def gameover():
     start_menu()
 
 
+# очистка игры и переменных
 def clear_game():
     global boss_lvl, lvl, alien_speed, score, stop_game, GAME_OVER
     global best_score, aliens, running, x, y
@@ -375,6 +387,7 @@ song6.play(-1)
 GAME_OVER = False
 running = True
 
+# главный цикл игры
 while running:
     if not stop_game:
         screen.blit(background, (0, 0))
@@ -391,10 +404,11 @@ while running:
         for i in range(6):
             for j in range(3):
                 if aliens[i][j] > 0:
+                    # если пришельцы дошли до конца
                     if y_alien + j * 50 + 50 > 660:
                         gameover()
                         clear_game()
-
+                    # если уровень обычный
                     if lvl % 5 != 0:
                         screen.blit(aliens_img[aliens[i][j]],
                                     (x_alien * 3 * i + 25, y_alien + j * 50))
@@ -414,23 +428,29 @@ while running:
                                     score += 2
                                 bullets.remove(bullet)
                                 song2.play(0)
+
+                    # если уровень с боссом
                     else:
                         if not boss:
                             song6.stop()
                             song9.play(0)
                         boss = True
+
                         if aliens[i][j] != 1:
                             screen.blit(aliens_img[10], (
                                 x_alien * 3 * i + 25, y_alien + j * 50))
                         else:
                             screen.blit(aliens_img[11], (
                                 x_alien * 3 * i + 25, y_alien + j * 50))
+
+                        # выстрелы для босса
                         if random.randrange(0, 40) == 3 and not stop_game:
                             song7.play(0)
                             boss_bullets.append(
                                 bulleti(round(x_alien * 3 * i + 60 + 80 // 2),
                                         round(y_alien + j * 50 + 100 // 2),
                                         10, (255, 0, 0), -1))
+
                         if aliens[i][j] > boss_lvl - 2 and not GAME_OVER:
                             draw_boss(screen, 111)
                             draw_boss(screen, boss_lvl)
@@ -466,7 +486,6 @@ while running:
                                 [x_alien * 3 * i + 25 + 50,
                                  y_alien + j * 50 + 50, x_alien * 3 * i + 25,
                                  y_alien + j * 50]):
-
                         screen.blit(ship_2, (x, y))
                         gameover()
                         clear_game()
@@ -484,10 +503,12 @@ while running:
             running = False
         if event.type == pygame.MOUSEBUTTONDOWN and not stop_game:
             song1.play(0)
+            # если меньше 5 пуль на экране, то добавляем
             if len(bullets) < 5:
                 bullets.append(bulleti(round(x + 80 // 2), round(y + 50 // 2),
                                        5, (255, 0, 0), 1))
 
+    # если свернули - открытие паузы
     if not pygame.display.get_active():
         pause_menu()
     else:
@@ -497,7 +518,7 @@ while running:
 
     if keys[pygame.K_ESCAPE]:
         pause_menu()
-
+    # кнопки для меню паузы
     if keys[pygame.K_SPACE] and stop_game:
         stop_game = False
         pygame.mouse.set_visible(False)
@@ -509,17 +530,18 @@ while running:
         clear_game()
         start_menu()
 
+    # отрисовка пуль
     if not stop_game:
         for bullet in bullets:
             bullet.draw(screen)
-            if 550 > bullet.y > 0:
+            if 650 > bullet.y > 0:
                 bullet.y -= bullet.vel
             else:
                 bullets.pop(bullets.index(bullet))
 
         for bullet in boss_bullets:
             bullet.draw(screen)
-            if 550 > bullet.y > 0:
+            if 650 > bullet.y > 0:
                 bullet.y -= bullet.vel
             else:
                 boss_bullets.pop(boss_bullets.index(bullet))
@@ -533,4 +555,5 @@ while running:
     clock.tick(40)
     pygame.display.flip()
 
+count_score(0)
 pygame.quit()
